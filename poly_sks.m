@@ -1,4 +1,4 @@
-function [out] = poly_sks_fix(i0,projA,projB,projC,knee,im,ang,specData,scatFac,nPad,cg,collim,bt,gamma,val)
+function [out] = poly_sks(i0,projA,projB,projC,knee,im,ang,specData,scatFac,nPad,cg,collim,bt,gamma,val)
 arr1 = (-(cg.ns-1)/2-nPad:(cg.ns-1)/2+nPad)*cg.ds; %
 if size(i0,2) == size(i0,1)
     arr2 = arr1;
@@ -116,9 +116,6 @@ scat1 = scat1+fft2(padarray(broad,[nPad,nPad,0])).*fg;
 for j = 1:size(projA,3)
         projScat(:,:,j) = real(unpad(ifftshift(ifft2(scat1(:,:,j))),nPad));
 end
-% for j = 1:size(projA,3)
-%         projScat2(:,:,j) = real(unpad(ifftshift(ifft2(scat2(:,:,j))),nPad));
-% end
 
 projScat(projScat<0) = 0;
 % n = projScat;
