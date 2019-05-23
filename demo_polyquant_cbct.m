@@ -5,16 +5,18 @@ head.cg = ct_geom('fan', 'ns', 256, 'nt', 128, 'na', 160, ...
 		'offset_s', 0, ...
 		'offset_t', 0.0, ...
 		'dsd', 150,'dod', 50, 'dfs', inf);
-head.ig = image_geom('nx', 299, 'ny', 137, 'nz', 70, 'dx', 0.1775,'dy',0.1775,'dz',0.484);
+head.ig = image_geom('nx', 99, 'ny', 137, 'nz', 70, 'dx', 0.1775,'dy',0.1775,'dz',0.484);
 head.A = Gcone(head.cg, head.ig, 'type', 'sf2', 'class', 'Fatrix');
 
 %%
 mode = [];
 mode.verbose = 2;
 mode.tau = 2;
-mode.nSplit = 16;
-mode.maxIter = 5e2;
+mode.nSplit = 32;
+mode.maxIter = 300;
 mode.scatFun = head.scatEst;
-lambda = 0.5;
-%mode.proxFun = @(z,t) prox_tv(z,t*lambda);
-out = polyquant(mode,specData,flipud(head.fac*head.proj),flipud(head.i0),head.A,flipud(head.eden));
+lambda = 2;
+param.up = 2.53;
+mode.proxFun = @(z,t) prox_tv3d_nn(z,t*lambda,param);
+xTrue = head.eden;
+out = polyquant(mode,specData,flipud(head.fac*head.proj),flipud(head.i0),head.A,xTrue(101:199,:,:));

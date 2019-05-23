@@ -1,4 +1,4 @@
-function [out] = poly_sks(i0,projA,projB,projC,knee,im,ang,specData,scatFac,nPad,cg,collim,bt,gamma,val)
+function [out] = poly_sks(i0,projA,projB,projC,im,ang,specData,scatFac,nPad,cg,collim,bt,gamma,val)
 arr1 = (-(cg.ns-1)/2-nPad:(cg.ns-1)/2+nPad)*cg.ds; %
 if size(i0,2) == size(i0,1)
     arr2 = arr1;
@@ -25,7 +25,6 @@ for k = 1:size(i0,3)
     [out,flTmp] = ell_centroid(rotAng,RP.MinorAxisLength*0.1775/2,RP.MajorAxisLength*0.1775/2,...
                   tranF(1),tranF(2),uu,true);
     tmpFac(:,:,k) = repmat((50-out')./50,1,size(i0,2));
-    flag(:,:,k) = repmat(flTmp',1,size(i0,2));
     rotAng = ang(k);
     rotMat = [cosd(rotAng),-sind(rotAng),0;
              sind(rotAng),cosd(rotAng),0;
@@ -59,9 +58,9 @@ broad = zeros(size(i0));
 specProb = specData.spectrum(:).*specData.response(:)./sum(specData.spectrum(:).*specData.response(:));
 
 for k = 1:length(specData.energy)
-    atten = knee(1,k)*projA+knee(2,k)*projB+knee(3,k)*projC;
+    atten = specData.knee(1,1,k)*projA+specData.knee(1,2,k)*projB+specData.knee(2,2,k)*projC;
     % Narrow scatter field calculation
-    A = scatFac.fA1(k,1)*ones(size(i0)); x2 = 1; x3 = 1; ...
+    A = scatFac.fA1(k,1)*ones(size(i0));...
         C = scatFac.C1(k);
     for i = 1:size(i0,3)
         %A(:,:,i) = A(:,:,i)/magFactor(i)^2;

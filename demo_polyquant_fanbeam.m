@@ -17,9 +17,9 @@ specData.knee(2,3,:) = permute(specData.kneeOld(5,:),[3,1,2]);
 %%
 mode = [];
 mode.verbose = 2;
-mode.tau = 1e5;
+mode.tau = 2;%1e5;
 mode.nSplit = 16;
 mode.maxIter = 5e2;
 lambda = 0.5;
-mode.proxFun = @(z,t) prox_tv(z,t*lambda);
+mode.proxFun = @(z,t) prox_tv_nn(z,t*lambda);
 out = polyquant(mode,specData,fac*mc.chest.proj,i0,A,im.eden.chest);

@@ -21,14 +21,20 @@ function out = polyquant(mode,specData,y,I0,Af,xTrue)
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 %% Initialisation
 mode = initialise_mode(mode);
-x0 = ones(Af.arg.ig.dim);
-Ab = Gblock(Af,mode.nSplit);
-if mode.flip
-    A = @(x,ind) (flipud(Ab{ind}*x));
-    At = @(p,ind) (Ab{ind}'*flipud(p));
+if ismatrix(y)
+    x0 = ones(size(Af.arg.mask));
 else
-    A = @(x,ind) Ab{ind}*x;
-    At = @(p,ind) Ab{ind}'*p;
+    x0 = ones(Af.arg.ig.dim);
+end
+Ab = Gblock(Af,mode.nSplit);
+
+A = @(x,ind) Ab{ind}*x;
+At = @(p,ind) Ab{ind}'*p;
+
+if mode.offset
+    w = @(z) offset_weight(z,mode.cg);
+else
+    w = @(z) z;
 end
 %const = y-y.*log(y+eps);
 %const = sum(const(:));
@@ -41,7 +47,7 @@ if ~isfield(mode,'L')
     mode.L = lipscitz_estimate(specData,I0,mode.scat,y,Ab*x0,Af);
 end
 %
-alpha = mode.nSplit*mode.tau*(1-mode.beta)/mode.L;  % the step-size
+alpha = mode.nSplit*mode.tau/mode.L;  % the step-size
 
 x1 = x0;
 timeTot = tic;
@@ -55,7 +61,7 @@ out.res(1) = rms(x1(:)-xTrue(:));
 %if mode.verbose>0
 %    fprintf('Intial objective function value = %d\n',out.f(1)-const);
 %end
-grAx = @(x1,is,ys,ind,subSet) polyquant_grad(specData,A,At,is,x1,ys,ind,mode.scatFun,subSet);
+grAx = @(x1,is,ys,ind,subSet) polyquant_grad(specData,A,At,is,x1,ys,ind,mode.scatFun,subSet,w);
 
 %% The main iterative loop
 for k = 1:mode.maxIter
@@ -110,7 +116,7 @@ end
 
 end
 
-function strOut = polyquant_grad(specData,A,At,I0,rho,y,ind,scatFun,subSet)
+function strOut = polyquant_grad(specData,A,At,I0,rho,y,ind,scatFun,subSet,w)
 % This function calculates the gradient, objective function unless using
 % OS, and the scatter if calculated on the fly.
 projSet = cell(length(specData.hinge)-1,2);
@@ -146,7 +152,7 @@ for k = 1:length(specData.spectrum)
 end
 mainFac = I0.*mainFac;
 
-deriFac = (y./(mainFac+s)-1);
+deriFac = w(y./(mainFac+s)-1);
 
 out = zeros(size(rho));
 for l = 1:length(specData.hinge)-1
@@ -183,7 +189,7 @@ function mode = initialise_mode(mode)
 if ~isfield(mode,'nest'),       mode.nest = true; end
 if ~isfield(mode,'maxIter'),    mode.maxIter = 100; end
 if ~isfield(mode,'bitRev'),     mode.bitRev = true; end
-if ~isfield(mode,'beta'),       mode.beta = 0; end
+if ~isfield(mode,'offset'),     mode.offset = false; end
 if ~isfield(mode,'verbose'),    mode.verbose = 1; end
 if ~isfield(mode,'tau'),        mode.tau = 1.99; end
 if ~isfield(mode,'nSplit'),     mode.nSplit = 1; end
@@ -199,4 +205,22 @@ elseif ~isa(mode.scatFun,'function_handle')
 else
     mode.scat = 0;
 end
+end
+
+function out = offset_weight(proj,cg)
+    out = proj;
+    us = ((cg.ns/2-0.5):-1:(-cg.ns/2+0.5))*cg.ds - cg.offset_s*cg.ds;
+    overlap = max(us);
+    overLoc = sum(abs(us)<=overlap);
+    replaceLoc = 1:overLoc;
+    denom = 2*atan(overlap/cg.dsd);
+    num = pi*atan(us(replaceLoc)/cg.dsd);
+    %weightArray = 1-cos(linspace(0,pi/2,overLoc)).^2;
+    weightArray = 1-0.5*(sin(num./denom)+1);
+    weightMat = repmat(weightArray',1,cg.nt);
+    replaceLoc = 1:size(weightMat,1);
+
+    for k = 1:size(proj,3)
+        out(end-replaceLoc+1,:,k) = proj(end-replaceLoc+1,:,k).*weightMat;
+    end
 end
