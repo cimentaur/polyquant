@@ -19,4 +19,4 @@ lambda = 2;
 param.up = 2.53;
 mode.proxFun = @(z,t) prox_tv3d_nn(z,t*lambda,param);
 xTrue = head.eden;
-out = polyquant(mode,specData,flipud(head.fac*head.proj),flipud(head.i0),head.A,xTrue(101:199,:,:));
+out = polyquant(mode,head.specData,head.proj,head.i0,head.A,xTrue(101:199,:,:));

@@ -36,6 +36,10 @@ if mode.offset
 else
     w = @(z) z;
 end
+
+if isfield(mode,'numLinFit')
+    specData.hinge = [specData.hinge(1:mode.numLinFit);inf];
+end
 %const = y-y.*log(y+eps);
 %const = sum(const(:));
 if isfield(specData,'response')
@@ -58,9 +62,13 @@ end
 
 %out.f(1) = f(fShow,x1);
 out.res(1) = rms(x1(:)-xTrue(:));
-%if mode.verbose>0
-%    fprintf('Intial objective function value = %d\n',out.f(1)-const);
-%end
+if mode.verbose == 2
+    if ismatrix(xTrue)
+        subplot(2,1,1),imshow(xTrue,mode.contrast);
+        subplot(2,1,2)
+    end
+    drawnow;
+end
 grAx = @(x1,is,ys,ind,subSet) polyquant_grad(specData,A,At,is,x1,ys,ind,mode.scatFun,subSet,w);
 
 %% The main iterative loop
@@ -100,7 +108,7 @@ for k = 1:mode.maxIter
             subplot(1,3,2),imshow(tmp(:,:,30),[0.8,1.2]);
             subplot(1,3,3),imshow(tmp(:,:,40),[0.8,1.2]);
         else
-            imshow(x1,[0,2]);
+            imshow(x1,mode.contrast);
         end
         drawnow;
     end
@@ -137,7 +145,11 @@ for k = 1:length(specData.hinge)-1
     hingeFac{k} = zeros(size(y));
 end
 
-s = scatFun(I0,projSet{1,1},projSet{2,1},projSet{2,2},rho,subSet,specData.knee);
+if length(specData.hinge)>2  % to bodge error for one linear fit
+    s = scatFun(I0,projSet{1,1},projSet{2,1},projSet{2,2},rho,subSet,specData.knee);
+else
+    s = scatFun(I0,projSet{1,1},projSet{1,1},projSet{1,2},rho,subSet,specData.knee);
+end
 for k = 1:length(specData.spectrum)
     linSum = zeros(size(y));
     for l = 1:length(specData.hinge)-1
@@ -196,6 +208,7 @@ if ~isfield(mode,'nSplit'),     mode.nSplit = 1; end
 if ~isfield(mode,'flip'),       mode.flip = false; end
 if ~isfield(mode,'regFun'),     mode.regFun = @(z) 0; end
 if ~isfield(mode,'proxFun'),    mode.proxFun = @(z,t) prox_nz(z); end
+if ~isfield(mode,'contrast'),   mode.contrast = [0,2]; end
 if ~isfield(mode,'scatFun')
     mode.scat = 0;
     mode.scatFun = @(z,~,~,~,~,~,~) 0; 

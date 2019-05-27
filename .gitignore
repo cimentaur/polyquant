@@ -1,2 +1,5 @@
 *.mat
+*.m~
+!fandata.mat
+!attenuationDb.mat
 pathdef.m
