@@ -2,6 +2,7 @@
 load data/scat_param
 load data/data_cbct_pelvis
 addpath(genpath('.'));
+i0 = repmat(pelvis.i0,1,1,160);
 
 %% Setup the geometry 
 cg = ct_geom('fan', 'ns', 256, 'nt', 128, 'na', 160, ...
@@ -32,4 +33,4 @@ mode.scatFun = @(i0,projA,projB,projC,rho,subSet,knee) ...
                  poly_sks(1.5*i0,projA,projB,projC,rho,angArray(subSet),...
                  pelvis.specData,scatParam,32,cg,ig,[0.3,15]);
 %% Perfrm Polyquant reconstrution
-out = polyquant(mode,pelvis.specData,pelvis.proj,pelvis.i0,A,pelvis.eden);
+out = polyquant(mode,pelvis.specData,pelvis.proj,i0,A,pelvis.eden);

@@ -1,6 +1,8 @@
 %% Load data
+load data/scatter_est_head
 load data/data_cbct_head
 addpath(genpath('.'));
+i0 = repmat(head.i0,1,1,160);
 
 %% Setup the geometry 
 cg = ct_geom('fan', 'ns', 256, 'nt', 128, 'na', 160, ...
@@ -18,7 +20,7 @@ mode.verbose = 2;
 mode.tau = 2;
 mode.nSplit = 32;
 mode.maxIter = 300;
-mode.scatFun = head.scatEst;
+mode.scatFun = scatEst;
 lambda = 2;  % can be optimised for better results
 mode.proxFun = @(z,t) prox_tv3d_nn(z,t*lambda);
-out = polyquant(mode,head.specData,head.proj,head.i0,A,head.eden);
+out = polyquant(mode,head.specData,head.proj,i0,A,head.eden);
