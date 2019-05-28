@@ -2,4 +2,7 @@
 *.m~
 !fandata.mat
 !attenuationDb.mat
+!scat_param.mat
+!data_cbct_pelvis.mat
+!data_cbct_head.mat
 pathdef.m

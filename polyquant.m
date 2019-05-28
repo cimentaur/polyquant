@@ -40,8 +40,7 @@ end
 if isfield(mode,'numLinFit')
     specData.hinge = [specData.hinge(1:mode.numLinFit);inf];
 end
-%const = y-y.*log(y+eps);
-%const = sum(const(:));
+
 if isfield(specData,'response')
     specData.spectrum = specData.spectrum.*specData.response;
 end
@@ -60,11 +59,14 @@ if mode.nest
    t = 1;
 end
 
-%out.f(1) = f(fShow,x1);
 out.res(1) = rms(x1(:)-xTrue(:));
 if mode.verbose == 2
-    if ismatrix(xTrue)
-        subplot(2,1,1),imshow(xTrue,mode.contrast);
+    if ndims(xTrue) == 3
+        subplot(2,3,1),imshow(xTrue(:,:,20),mode.contrast);
+        subplot(2,3,2),imshow(xTrue(:,:,30),mode.contrast),title('ground truth');
+        subplot(2,3,3),imshow(xTrue(:,:,40),mode.contrast);
+    else
+        subplot(2,1,1),imshow(xTrue,mode.contrast),title('ground truth');
         subplot(2,1,2)
     end
     drawnow;
@@ -98,17 +100,16 @@ for k = 1:mode.maxIter
 
     out.res(k+1) = rms(x1(:)-xTrue(:));
     if mode.verbose > 0
-      fprintf('\r res = %d        ',out.res(k+1));
+      fprintf('\r  Iter = %d; subset = %d; res = %d        ',k,ind,out.res(k+1));
     end
     if mode.verbose == 2
-      fprintf(' Iter = %d; subset = %d',k,ind);
+        str = ['polyquant at iteration: ',num2str(k)];
         if ndims(x1) == 3
-            tmp = flipud(x1);%imrotate(x1,-90);
-            subplot(1,3,1),imshow(tmp(:,:,20),[0.8,1.2]);
-            subplot(1,3,2),imshow(tmp(:,:,30),[0.8,1.2]);
-            subplot(1,3,3),imshow(tmp(:,:,40),[0.8,1.2]);
+            subplot(2,3,4),imshow(x1(:,:,20),mode.contrast);
+            subplot(2,3,5),imshow(x1(:,:,30),mode.contrast),title(str);
+            subplot(2,3,6),imshow(x1(:,:,40),mode.contrast);
         else
-            imshow(x1,mode.contrast);
+            imshow(x1,mode.contrast),title(str);
         end
         drawnow;
     end
@@ -116,10 +117,9 @@ for k = 1:mode.maxIter
 end
 time = toc(timeTot);
 out.time = time;
-%out.fTime = TF;
 out.rec = xNew;
 if mode.verbose > 0
-    fprintf('finito in %d s\n',time);
+    fprintf('\n Finished in %d seconds\n',time);
 end
 
 end
