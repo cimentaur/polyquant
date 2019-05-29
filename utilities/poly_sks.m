@@ -51,15 +51,15 @@ tmpFac = zeros(size(i0));
 for k = 1:size(i0,3)
     rotAng = ang(k);
     out = ell_centroid(rotAng,RP.MinorAxisLength*ig.dx/2,RP.MajorAxisLength*ig.dx/2,...
-                  tranF(1),tranF(2),uu,true);
-    tmpFac(:,:,k) = repmat((50-out')./50,1,size(i0,2));
+                  tranF(1),tranF(2),uu,true,cg);
+    tmpFac(:,:,k) = repmat((cg.dod-out')./cg.dod,1,size(i0,2));
     rotAng = ang(k);
     rotMat = [cosd(rotAng),-sind(rotAng),0;
              sind(rotAng),cosd(rotAng),0;
              0,0,1];
     rotTrans = rotMat*trans';
     
-    magFactor(k) = (50-rotTrans(1))/50;
+    magFactor(k) = (cg.dod-rotTrans(1))/cg.dod;
     tmpFac(:,:,k) = repmat(magFactor(k),size(i0,1),size(i0,2)).^2;
     
 end

@@ -62,9 +62,9 @@ end
 out.res(1) = rms(x1(:)-xTrue(:));
 if mode.verbose == 2
     if ndims(xTrue) == 3
-        subplot(2,3,1),imshow(xTrue(:,:,20),mode.contrast);
-        subplot(2,3,2),imshow(xTrue(:,:,30),mode.contrast),title('ground truth');
-        subplot(2,3,3),imshow(xTrue(:,:,40),mode.contrast);
+        subplot(2,3,1),imshow(imrotate(xTrue(:,:,20),-90),mode.contrast);
+        subplot(2,3,2),imshow(imrotate(xTrue(:,:,30),-90),mode.contrast),title('ground truth');
+        subplot(2,3,3),imshow(imrotate(xTrue(:,:,40),-90),mode.contrast);
     else
         subplot(2,1,1),imshow(xTrue,mode.contrast),title('ground truth');
         subplot(2,1,2)
@@ -105,9 +105,9 @@ for k = 1:mode.maxIter
     if mode.verbose == 2
         str = ['polyquant at iteration: ',num2str(k)];
         if ndims(x1) == 3
-            subplot(2,3,4),imshow(x1(:,:,20),mode.contrast);
-            subplot(2,3,5),imshow(x1(:,:,30),mode.contrast),title(str);
-            subplot(2,3,6),imshow(x1(:,:,40),mode.contrast);
+            subplot(2,3,4),imshow(imrotate(x1(:,:,20),-90),mode.contrast);
+            subplot(2,3,5),imshow(imrotate(x1(:,:,30),-90),mode.contrast),title(str);
+            subplot(2,3,6),imshow(imrotate(x1(:,:,40),-90),mode.contrast);
         else
             imshow(x1,mode.contrast),title(str);
         end

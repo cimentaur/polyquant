@@ -1,6 +1,6 @@
-function [out,flag] = ell_centroid(theta,rx,ry,sx,sy,y,flagIt)
-m = y./150;
-c = y-50*m;
+function [out,flag] = ell_centroid(theta,rx,ry,sx,sy,y,flagIt,cg)
+m = y./cg.dsd;
+c = y-cg.dod*m;
 rx = rx.^2; ry = ry.^2;
 A = (cosd(theta)-m*sind(theta)).^2./rx+(sind(theta)+m*cosd(theta)).^2./ry;
 B = -2*(c*sind(theta)+sx).*(cosd(theta)-m*sind(theta))./rx+...

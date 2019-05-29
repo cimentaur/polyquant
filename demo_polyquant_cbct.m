@@ -1,3 +1,32 @@
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Cone-beam CT Polyquant demo
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Description
+% ----------
+% This script demonstrates polyquant reconstruction for cone-beam CT, with
+% high levels of scatter. The data was generated using Gate without a
+% collimator. Please refer to 'demo_polyquant_fanbeam.m' for a description
+% of the variables, which are the same in this case, only with a different
+% spectrum (head.specData.spectrum).
+% In this demo, we are given a pre-calculated estimate of the scatter
+% (scatEst) generated from an fASKS-like approach. 
+%
+% Things to try
+% ------------
+% o Substitute the scatter estimate (mode.scatFun) for the true scatter
+%   (head.scat), to see the ultimate scatter estimate's performance.
+% o Remove the 'mode.scatFun' line to see the scatter artefacts.
+% o Adjust regularisation and convergence parameters an compare to fanbeam.
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Created:      26/04/2019
+% Last edit:    29/05/2019
+% Jonathan Hugh Mason
+%
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% References: (please cite if making use of this code or its methods) 
+% Jonathan H Mason et al 2017 Phys. Med. Biol. 62 8739
+% Jonathan H Mason et al 2018 Phys. Med. Biol. 63 225001
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 %% Load data
 load data/scatter_est_head
 load data/data_cbct_head
