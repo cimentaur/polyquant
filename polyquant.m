@@ -11,7 +11,7 @@ function out = polyquant(mode,specData,y,I0,Af,xTrue)
 % (xTrue)       -- ground truth image (optional)
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Created:      07/03/2018
-% Last edit:    26/04/2019
+% Last edit:    31/05/2019
 % Jonathan Hugh Mason
 %
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -49,8 +49,14 @@ end
 if ~isfield(mode,'L')
     mode.L = lipscitz_estimate(specData,I0,mode.scat,y,Ab*x0,Af);
 end
-%
+
 alpha = mode.nSplit*mode.tau/mode.L;  % the step-size
+if mode.useConst
+    const = y-y.*log(y+eps);
+    const = sum(const(:));  % a constant offset for objective function
+else
+    const = 0;
+end
 
 x1 = x0;
 timeTot = tic;
@@ -59,7 +65,7 @@ if mode.nest
    t = 1;
 end
 
-out.res(1) = rms(x1(:)-xTrue(:));
+out.rmse(1) = rms(x1(:)-xTrue(:));
 if mode.verbose == 2
     if ndims(xTrue) == 3
         subplot(2,3,1),imshow(imrotate(xTrue(:,:,20),-90),mode.contrast);
@@ -72,8 +78,11 @@ if mode.verbose == 2
     drawnow;
 end
 grAx = @(x1,is,ys,ind,subSet) polyquant_grad(specData,A,At,is,x1,ys,ind,mode.scatFun,subSet,w);
-
+objFac = zeros(size(y)); out.scat = zeros(size(y));
 %% The main iterative loop
+if mode.verbose > 0
+    fprintf('Starting Polyquant reconstruction:\n');
+end
 for k = 1:mode.maxIter
     ind = mod(k,mode.nSplit)+1;
     if mode.bitRev
@@ -90,17 +99,23 @@ for k = 1:mode.maxIter
     end
     
     gradAx = grAx(x1,is,ys,ind,subSet);
-    out.scat(:,:,subSet) = gradAx.s;
+    if ndims(x0) == 3
+        out.scat(:,:,subSet) = gradAx.s;
+        objFac(:,:,subSet) = gradAx.objFac;
+    else
+        out.scat(:,subSet) = gradAx.s;
+        objFac(:,subSet) = gradAx.objFac;
+    end
     xNew = mode.proxFun(x1-alpha*gradAx.grad,alpha);
 
     t1 = 0.5*(1+sqrt(1+4*t^2));
     x1 = xNew+(t-1)/t1*(xNew-x0);
     x0 = xNew;
     t = t1;
-
-    out.res(k+1) = rms(x1(:)-xTrue(:));
+    out.rmse(k+1) = rms(x1(:)-xTrue(:));
+    out.obj(k+1) = sum(double(objFac(:)+out.scat(:)-y(:).*log(objFac(:)+out.scat(:)+eps)))-const+mode.regFun(x1);
     if mode.verbose > 0
-      fprintf('\r  Iter = %d; subset = %d; res = %d        ',k,ind,out.res(k+1));
+      fprintf('\rIter = %i;\t RMSE = %.4e;\t obj = %.4e;\t subset = %i    ',k,out.rmse(k+1),out.obj(k+1),ind);
     end
     if mode.verbose == 2
         str = ['polyquant at iteration: ',num2str(k)];
@@ -117,9 +132,9 @@ for k = 1:mode.maxIter
 end
 time = toc(timeTot);
 out.time = time;
-out.rec = xNew;
+out.recon = xNew;
 if mode.verbose > 0
-    fprintf('\n Finished in %d seconds\n',time);
+    fprintf('\n Finished in %.2e seconds\n',time);
 end
 
 end
@@ -172,6 +187,7 @@ for l = 1:length(specData.hinge)-1
 end
 
 strOut.grad = out;
+strOut.objFac = mainFac;
 strOut.s = s;
 end
 
@@ -209,6 +225,7 @@ if ~isfield(mode,'flip'),       mode.flip = false; end
 if ~isfield(mode,'regFun'),     mode.regFun = @(z) 0; end
 if ~isfield(mode,'proxFun'),    mode.proxFun = @(z,t) prox_nz(z); end
 if ~isfield(mode,'contrast'),   mode.contrast = [0,2]; end
+if ~isfield(mode,'useConst'),   mode.useConst = false; end
 if ~isfield(mode,'scatFun')
     mode.scat = 0;
     mode.scatFun = @(z,~,~,~,~,~,~) 0; 
@@ -221,6 +238,7 @@ end
 end
 
 function out = offset_weight(proj,cg)
+    % Offset weighting for half-fan case from [G. Wang, Med Phys. 2002]
     out = proj;
     us = ((cg.ns/2-0.5):-1:(-cg.ns/2+0.5))*cg.ds - cg.offset_s*cg.ds;
     overlap = max(us);

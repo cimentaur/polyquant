@@ -25,7 +25,7 @@
 % o Adjust regularisation and convergence parameters an compare to fanbeam.
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Created:      26/04/2019
-% Last edit:    29/05/2019
+% Last edit:    31/05/2019
 % Jonathan Hugh Mason
 %
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -51,6 +51,7 @@ ig = image_geom('nx', 299, 'ny', 137, 'nz', 60, 'dx', 0.1775,'dy',0.1775,'dz',0.
 A = Gcone(cg, ig, 'type', 'sf2', 'class', 'Fatrix');
 %% Polyquant setup and reconstruction
 mode = [];
+mode.useConst = true;
 mode.verbose = 2;
 mode.tau = 5;  % a little more aggressive
 mode.offset = true;
@@ -60,6 +61,7 @@ mode.maxIter = 500;
 mode.numLinFit = 2;  % since there's no metal implants
 lambda = 0.1;  % can be optimised for better results
 mode.proxFun = @(z,t) prox_tv3d_nn(z,t*lambda);
+mode.regFun = @(z) norm_tv3d(z);
 angArray = ((-90:2.25:270-2.25));
 %% Scatter estimation function
 % The factor 1.5 on the incident intensity is to compensate for the 
@@ -70,3 +72,4 @@ mode.scatFun = @(i0,projA,projB,projC,rho,subSet,knee) ...
                  pelvis.specData,scatParam,32,cg,ig,[0.3,15]);
 %% Perfrm Polyquant reconstrution
 out = polyquant(mode,pelvis.specData,pelvis.proj,i0,A,pelvis.eden);
+fprintf('Reconstructed with PSNR = %.2f dB\n',20*log10(max(pelvis.eden(:))./out.rmse(end)));

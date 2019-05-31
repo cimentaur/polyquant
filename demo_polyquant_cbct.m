@@ -19,7 +19,7 @@
 % o Adjust regularisation and convergence parameters an compare to fanbeam.
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Created:      26/04/2019
-% Last edit:    29/05/2019
+% Last edit:    31/05/2019
 % Jonathan Hugh Mason
 %
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -45,6 +45,7 @@ A = Gcone(cg, ig, 'type', 'sf2', 'class', 'Fatrix');
 
 %% Polyquant setup and reconstruction
 mode = [];
+mode.useConst = true;
 mode.verbose = 2;
 mode.tau = 2;
 mode.nSplit = 32;
@@ -52,4 +53,6 @@ mode.maxIter = 300;
 mode.scatFun = scatEst;
 lambda = 2;  % can be optimised for better results
 mode.proxFun = @(z,t) prox_tv3d_nn(z,t*lambda);
+mode.regFun = @(z) norm_tv3d(z);
 out = polyquant(mode,head.specData,head.proj,i0,A,head.eden);
+fprintf('Reconstructed with PSNR = %.2f dB\n',20*log10(max(head.eden(:))./out.rmse(end)));

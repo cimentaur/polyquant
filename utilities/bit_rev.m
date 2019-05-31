@@ -1,4 +1,5 @@
 function out = bit_rev(in,sz)
+% Bit-reversal ordering as in [G. Herman and L. Meyer, IEEE TMI 1993]
 facs = factor(sz);
 unit = zeros(size(facs));
 unit(1) = 1;

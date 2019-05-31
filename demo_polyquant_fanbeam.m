@@ -35,7 +35,7 @@
 %   equivalent to a linearised model (monoenergetic).
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Created:      26/04/2019
-% Last edit:    29/05/2019
+% Last edit:    31/05/2019
 % Jonathan Hugh Mason
 %
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -57,15 +57,18 @@ A = Gtomo2_dscmex(sg, ig);
 %% Polyquant setup 
 sample = 'chest';  % 'brain', 'head', 'abdomen', 'pelvis', 'implant'
 mode = [];
+mode.useConst = true;  % just to offset objective function to better range
 mode.contrast = [0.5,1.4];  % display contrast
-mode.verbose = 2;
+mode.verbose = 2;  % 0 = no output; 1 = text output; 2 = text+image output
 mode.tau = 5;  % conservative choice
 mode.nSplit = 24;
 mode.maxIter = 500;  % more iterations recommended for implant
 lambda = 0.5;  % can be optimised for better results
 mode.numLinFit = 2;  % can be set to 2 for tissue, but use 3 for implant
 mode.proxFun = @(z,t) prox_tv_nn(z,t*lambda);
+mode.regFun = @(z) norm_tv(z);
 xTrue = mat_to_den(attenuationDb,single(fandata.(sample).mat));
 
 %% Perform the reconstruction
 out = polyquant(mode,fandata.specData,fandata.(sample).proj,fandata.i0,A,xTrue);
+fprintf('Reconstructed with PSNR = %.2f dB\n',20*log10(max(xTrue(:))./out.rmse(end)));
