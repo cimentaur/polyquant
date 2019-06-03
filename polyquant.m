@@ -4,14 +4,39 @@ function out = polyquant(mode,specData,y,I0,Af,xTrue)
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Parameters
 % ----------
-% mode          -- structure describing the dimensions of the geometry.
-% specData      -- 3D volume of specimen to be projected.
-% y             -- the CT measurements
-% I0            -- the incident flux profile
-% (xTrue)       -- ground truth image (optional)
+% mode          -- structure containing the settings and functions:
+% (all these settings have default values: see initialise_mode)
+%   mode.tau          -- stepsize scaling factor (< 2 is conservative).
+%   mode.maxIter      -- number of iterations.
+%   mode.nest         -- use FISTA-like Nesterov acceleration.
+%   mode.nSplit       -- number of ordered subset divisions (1 is full).
+%   mode.verbose      -- output settings: 0 = silent; 1 = text; 2 = figure.
+%   mode.contrast     -- display contrast for output live updat figure.
+%   mode.regFun       -- handle to regularisation function.
+%   mode.proxFun      -- handle to proximity operator for regularisation.
+%   mode.scatFun      -- scatter estimation function (see poly_sks.m).
+%   mode.useConst     -- offset objective function to better range.
+%   mode.bitRev       -- use subset shuffling (bit-reversal ordering).
+%   mode.offset       -- use Wang offset detector weighting for half-fan.
+%   mode.L            -- supplying Lipschitz estimate will save time.
+% specData      -- structure containing spectral information:
+%   specData.energy   -- the energies (MeV) in the subsampled spectrum.
+%   specData.spectrum -- the subsampled source spectrum.
+%   specData.response -- the detector response function.
+%   specData.hinge    -- the location of the piecewise linear fit
+%                        transitions, for 3 linear sections.
+%   specData.knee     -- contains the equations for the piecewise linear 
+%                        fits between relative electron density and each 
+%                        energy in specData.energy. This was fitted against 
+%                        the biological materials in the ICRP 89 and for
+%                        titanium (density = 4.506 g/cm3).
+% y             -- the raw X-ray CT measurements.
+% I0            -- the incident flux profile.
+% Af            -- the CT system operator generated from Fessler's toolbox. 
+% xTrue         -- ground truth image (can be 0 if unknown).
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Created:      07/03/2018
-% Last edit:    31/05/2019
+% Last edit:    02/06/2019
 % Jonathan Hugh Mason
 %
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -46,7 +71,7 @@ if isfield(specData,'response')
 end
 
 
-if ~isfield(mode,'L')
+if ~isfield(mode,'L')  % estimate Lipschitz if unknown
     mode.L = lipscitz_estimate(specData,I0,mode.scat,y,Ab*x0,Af);
 end
 
@@ -107,11 +132,16 @@ for k = 1:mode.maxIter
         objFac(:,subSet) = gradAx.objFac;
     end
     xNew = mode.proxFun(x1-alpha*gradAx.grad,alpha);
-
-    t1 = 0.5*(1+sqrt(1+4*t^2));
-    x1 = xNew+(t-1)/t1*(xNew-x0);
-    x0 = xNew;
-    t = t1;
+    
+    if mode.nest
+        t1 = 0.5*(1+sqrt(1+4*t^2));
+        x1 = xNew+(t-1)/t1*(xNew-x0);
+        x0 = xNew;
+        t = t1;
+    else
+        x1 = xNew;
+    end
+    
     out.rmse(k+1) = rms(x1(:)-xTrue(:));
     out.obj(k+1) = sum(double(objFac(:)+out.scat(:)-y(:).*log(objFac(:)+out.scat(:)+eps)))-const+mode.regFun(x1);
     if mode.verbose > 0
